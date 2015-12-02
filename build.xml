@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="default" name="ant-php" xmlns:if="ant:if" xmlns:unless="ant:unless" xmlns:ivy="antlib:org.apache.ivy.ant" xmlns:au="antlib:org.apache.ant.antunit">
+
+	<property name="ivy.version" value="2.4.0-rc1" />
+
+	<property name="ivy.dir" location="${basedir}/ivy" />
+	<property name="ivy.xml" value="metadata.xml" />
+	<property name="src.dir" location="${basedir}/src" />
+	<property name="lib.dir" location="${basedir}/lib" />
+
+	<property name="build.dir" location="${basedir}/build" />
+	<property name="dist.dir" location="${build.dir}/dist" />
+
+	<property name="tmp.dir" location="${build.dir}/tmp" />
+
+	<property file="build.properties" />
+	<property file="default.properties" />
+
+	<property environment="env" />
+
+	<target name="bootstrap" description="retrieves aditional tools required by the build">
+		<echoproperties></echoproperties>
+		<property name="tools.dir" location="${env.ANT_HOME}/lib" if:set="env.ANT_HOME"/>
+		<property name="tools.dir" location="${build.dir}/tools"/>
+		
+		<mkdir dir="${tools.dir}"/>
+		<available file="${tools.dir}/ivy-${ivy.version}.jar" property="skip.get.ivy" value="true" />
+
+		<!--retrieve ivy if not available -->
+		<get src="http://central.maven.org/maven2/org/apache/ivy/ivy/${ivy.version}/ivy-${ivy.version}.jar" dest="${tools.dir}" unless:set="skip.get.ivy" />
+
+		
+		
+
+		<path id="build.tools">
+			<fileset dir="${tools.dir}">
+				<include name="**/*.jar" />
+			</fileset>
+		</path>
+
+		<taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpathref="build.tools" />
+		
+		
+		
+	</target>
+
+	<target name="autoconf" depends="bootstrap">
+		<property name="build.status" value="working" />
+
+		<condition property="build.resolver" value="working">
+			<equals arg1="${build.status}"  arg2="working"/>
+		</condition>
+		<condition property="build.publisher" value="local">
+			<equals arg1="${build.status}" arg2="working" />
+		</condition>
+
+		<!-- by default the devel qualifier will be used to determine the version string -->
+		<property name="build.qualifier" value="-working" />
+
+	</target>
+
+	<target name="validate" depends="autoconf">
+	</target>
+
+	<target name="init.dirs" extensionOf="xp.init">
+
+		<property name="main.src.dir" location="${basedir}/src/main/java" />
+		<property name="test.src.dir" location="${basedir}/src/test" />
+		<property name="etc.dir" location="${basedir}/src/etc" />
+
+		<property name="main.bin.dir" location="${build.dir}/bin" />
+		<property name="test.bin.dir" location="${build.dir}/bin-test" />
+
+	</target>
+
+	<target name="init.props" extensionOf="xp.init">
+
+		<property name="ivy.default.resolver" value="${build.resolver}" />
+
+		<ivy:configure settingsId="${build.status}" file="${ivy.dir}/settings.xml" />
+
+		<ivy:info property="meta" settingsRef="${build.status}" file="${ivy.dir}/${ivy.xml}" />
+
+		<property name="build.revision" value="${meta.revision}" />
+		<property name="build.version" value="${build.revision}${build.qualifier}" />
+		
+		<echo message="${build.version}"/>
+	</target>
+
+	<extension-point name="xp.init" depends="autoconf,validate" />
+
+	<target name="init" depends="xp.init" description="intialize">
+		<mkdir dir="${tmp.dir}"/>
+		<!--
+		<echoproperties prefix="branch" />
+		
+		<echoproperties prefix="build" />
+-->
+		<uptodate property="libs.uptodate" srcfile="${ivy.dir}/${ivy.xml}" targetfile="${tmp.dir}/last.resolve"/>
+		
+		<ivy:resolve revision="${build.version}" settingsRef="${build.status}" file="${ivy.dir}/${ivy.xml}" unless:set="libs.uptodate" />
+		<ivy:retrieve settingsRef="${build.status}" sync="true" log="quiet" unless:set="libs.uptodate" />
+		<touch file="${tmp.dir}/last.resolve" unless:set="libs.uptodate"/>
+
+		<property name="jvm.version" value="1.6" />
+
+		<path id="main.classpath">
+			<fileset dir="${lib.dir}" erroronmissingdir="false">
+				<include name="*.jar" />
+			</fileset>
+		</path>
+
+		<path id="test.classpath">
+			<fileset dir="${lib.dir}" erroronmissingdir="false">
+				<include name="*.jar" />
+			</fileset>
+		</path>
+
+
+	</target>
+
+
+	<target name="compile.main">
+		<mkdir dir="${main.bin.dir}" />
+
+		<javac srcdir="${main.src.dir}" destdir="${main.bin.dir}" classpathref="main.classpath" sourcepath="" source="${jvm.version}" target="${jvm.version}" includeantruntime="no">
+		</javac>
+
+		<copy todir="${main.bin.dir}">
+			<fileset dir="${main.src.dir}" includes="**/antlib.xml" />
+		</copy>
+
+	</target>
+
+
+	<target name="compile.test">
+		<mkdir dir="${test.bin.dir}" />
+		<javac srcdir="${test.src.dir}" destdir="${test.bin.dir}" classpathref="test.classpath" sourcepath="" debug="${debug}" source="${jvm.version}" target="${jvm.version}" includeantruntime="no" deprecation="${deprecation}">
+
+
+		</javac>
+	</target>
+
+	<target name="compile" depends="init,compile.main,compile.test" description="compiles sources and tests" />
+	
+	
+	<target name="test" depends="antunit" 
+		description="--> run unit tests and generates collects reports">
+		
+	</target>
+
+	<target name="antunit.init" depends="init,compile">
+		
+		<property name="antunit.src.dir" location="${test.src.dir}/antunit"/>
+		<property name="antunit.log.dir" location="${build.dir}/log/antunit"/>
+		<property name="antunit.resources.dir" location="${test.src.dir}/resources"/>
+		<property name="antunit.log.level" value="info"/>
+		<property name="antunit.reports" location="${build.dir}/log/reports"/>
+		<property name="antunit.report.style.dir" location="${antunit.resources.dir}/xsl"/>
+		
+		<condition property="antunit.includes" value="${antunit.testcase}" else="**/*-test.xml">
+			<isset property="antunit.testcase"/>
+		</condition>
+		
+
+		<path id="antunit.classpath">
+			<fileset dir="${lib.dir}">
+				<include name="*.jar" />
+			</fileset>
+		</path>
+		<taskdef resource="org/apache/ant/antunit/antlib.xml" uri="antlib:org.apache.ant.antunit" classpathref="antunit.classpath" />
+
+	</target>
+	
+	<target name="antunit.main" depends="antunit.init" description="->executes the antunit tests">
+		<!-- TODO implement support for running a single ant unit test -->
+		<mkdir dir="${antunit.log.dir}"/>
+		<au:antunit failonerror="false" errorproperty="antunit.failed">
+			<fileset dir="${antunit.src.dir}" includes="${antunit.includes}" excludes="${antunit.excludes}"/>
+			<au:plainlistener loglevel="${antunit.log.level}"/>
+			<au:xmllistener todir="${antunit.log.dir}"/>
+		</au:antunit>
+	</target>
+	
+	
+	<target name="antunit" depends="antunit.main">
+		
+		  <length>
+		      <fileset dir="${antunit.log.dir}" includes="TEST-*.xml" />
+		    </length>
+		    <mkdir dir="${antunit.reports}" />
+		
+		    <junitreport todir="${antunit.reports}">
+		      <fileset dir="${antunit.log.dir}" includes="TEST-*.xml" />
+		      <report styledir="${antunit.report.style.dir}" format="frames"
+		              todir="${antunit.reports}"/>
+		    </junitreport>
+		 
+		    <length>
+		      <fileset dir="${antunit.log.dir}" includes="TEST-*.xml" />
+		    </length>
+		
+	</target>
+	
+	
+
+	
+
+<!--
+	<target name="package" depends="package.binaries,package.sources" />
+-->	
+<!--
+	<target name="antunit" depends="package" unless="skip.test">
+
+		<property name="antunit.src.dir" location="${test.src.dir}/antunit" />
+		<property name="antunit.log.dir" location="${test.build.dir}/log" />
+
+		<path id="antunit.classpath">
+			<fileset dir="${lib.dir}">
+				<include name="*.jar" />
+			</fileset>
+		</path>
+		<taskdef resource="org/apache/ant/antunit/antlib.xml" uri="antlib:org.apache.ant.antunit" classpathref="antunit.classpath" />
+
+		<mkdir dir="${antunit.log.dir}" />
+		<au:antunit failOnError="true" errorProperty="antunit.tests.failed">
+			<fileset dir="${antunit.src.dir}" includes="**/*.xml" excludes="*.xml" />
+			<au:xmllistener todir="${antunit.log.dir}" />
+			<au:plainlistener />
+		</au:antunit>
+	</target>
+-->
+	<!--
+	<target name="publish">
+		<property name="publish.module" value="${meta.module}" />
+		<property name="publish.organisation" value="${meta.organisation}" />
+		<property name="publish.revision" value="${build.version}" />
+		<property name="publish.resolver" value="${build.publisher}" />
+		<property name="publish.status" value="${build.status}" />
+		<property name="publish.overwrite" value="true" />
+
+		<ivy:publish settingsRef="${build.status}" module="${publish.module}" organisation="${publish.organisation}" status="${publish.status}" resolver="${publish.resolver}" forcedeliver="true" revision="${publish.revision}" pubrevision="${publish.revision}" overwrite="${publish.overwrite}" />
+	</target>
+-->
+	<target name="clean" description="-> clean all the build artifacts">
+		<delete dir="${build.dir}" />
+	</target>
+
+	<target name="default" depends="antunit" />
+
+
+</project>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="default" name="lint-test"
+	xmlns:php="antlib:org.opfx.ant.php"
+	xmlns:au="antlib:org.apache.ant.antunit"
+	>
+
+	<import file="../base.xml" as="base"/>
+
+		<target name="default">
+		</target>	
+	<target name="defaultx" depends="setUp,init">
+		
+		
+		<resourcecount property="src.count">
+			<fileset dir="${src.dir}" includes="**/*.php"/>
+		</resourcecount>
+		<echo message="Linting"/>
+		<au:assertLogDoesntContain text="Linting" mergeLines="false"/>
+			
+		
+		<php:lint srcdir="${src.dir}" destdir="${bin.dir}"/>
+		
+		<au:assertLogDoesntContain text="Linting" mergeLines="false"/>
+		
+		<echo message="======================================="/>
+		<php:lint srcdir="${src.dir}" destdir="${bin.dir}"/>
+		
+		<!--
+		<php:lint srcdir="${src.dir}" destdir="${bin.dir}" preserveintarget="resources/*"/>
+		-->
+	</target>
+	
+	
+	
+	
+	<target name="testLintSourceDirectory">
+		<resourcecount property="src.count">
+			<fileset dir="${src.dir}" includes="**/*.php"/>
+		</resourcecount>
+		<au:assertLogDoesntContain text="Linting ${src.count} files"/>
+		<au:assertLogDoesntContain text="Nothing to lint"/>
+		<php:lint srcdir="${src.dir}" destdir="${bin.dir}"/>
+		<au:assertLogContains text="Linting ${src.count} files"/>
+		
+		<php:lint srcdir="${src.dir}" destdir="${bin.dir}"/>
+		<au:assertLogContains text="Nothing to lint"/>
+	</target>
+	
+	
+	<target name="testLintFileSet">
+		<resourcecount property="src.count">
+			<fileset dir="${src.dir}" includes="**/*.php"/>
+		</resourcecount>
+		<au:assertLogDoesntContain text="Linting ${src.count} files"/>
+		<au:assertLogDoesntContain text="Nothing to lint"/>
+		<php:lint destdir="${bin.dir}">
+			<fileset dir="${src.dir}" includes="**/*.php"/>
+		</php:lint>
+		<au:assertLogContains text="Linting ${src.count} files"/>
+		
+		<php:lint destdir="${bin.dir}">
+			<fileset dir="${src.dir}" includes="**/*.php"/>
+		</php:lint>
+
+		<au:assertLogContains text="Nothing to lint"/>
+	</target>
+	
+	<target name="testLintInPlace">
+			<resourcecount property="src.count">
+				<fileset dir="${src.dir}" includes="**/*.php"/>
+			</resourcecount>
+			<au:assertLogDoesntContain text="Linting ${src.count} files"/>
+			<au:assertLogDoesntContain text="Nothing to lint"/>
+			<php:lint>
+				<fileset dir="${src.dir}" includes="**/*.php"/>
+			</php:lint>
+			<au:assertLogContains text="Linting ${src.count} files"/>
+			
+			<php:lint destdir="${bin.dir}">
+				<fileset dir="${src.dir}" includes="**/*.php"/>
+			</php:lint>
+
+			<au:assertLogContains text="Nothing to lint"/>
+		</target>
+</project>

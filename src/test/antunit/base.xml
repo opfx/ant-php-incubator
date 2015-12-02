@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project name="base" xmlns:php="antlib:org.opfx.ant.php" xmlns:au="antlib:org.apache.ant.antunit">
+
+	<property name="rootdir" location="./../../../../" />
+	<property name="builddir" location="${rootdir}/build" />
+
+	<property name="resourcesdir" location="./../../resources" />
+	<property name="bindir" location="${builddir}/bin" />
+	<property name="libdir" location="${rootdir}/lib" />
+
+	<property name="workdir" location="${builddir}/ws" />
+	<property name="logdir" location="${builddir}/log" />
+
+
+	<path id="classpath">
+		<pathelement location="${bindir}" />
+		<fileset dir="${libdir}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<typedef resource="org/opfx/ant/php/antlib.xml" uri="antlib:org.opfx.ant.php" classpathref="classpath" />
+	<taskdef resource="org/apache/ant/antunit/antlib.xml" uri="antlib:org.apache.ant.antunit" classpathref="classpath" />
+
+	<target name="init">
+		<property name="project.name" value="project" />
+		<property name="base.dir" location="${workdir}/${project.name}" />
+		<property name="build.dir" location="${base.dir}/build" />
+		<property name="src.dir" location="${base.dir}/src/main/php" />
+		<property name="bin.dir" location="${build.dir}/classes" />
+	</target>
+
+	<target name="setUp" depends="init">
+
+		<mkdir dir="${workdir}" />
+		<mkdir dir="${logdir}" />
+		<sync todir="${workdir}">
+			<fileset dir="${resourcesdir}" />
+		</sync>
+
+	</target>
+
+
+
+
+
+
+</project>

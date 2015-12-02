@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="default" name="phar-test"
+	xmlns:php="antlib:org.opfx.ant.php"
+	xmlns:au="antlib:org.apache.ant.antunit"
+	>
+
+	<import file="../base.xml" as="base"/>
+
+		<target name="default" depends="setUp,init">
+			
+			<mkdir dir="${bin.dir}"/>
+			
+			<php:phar srcdir="${src.dir}" output="${bin.dir}/gigi.phar"/>
+			<au:assertFileExists file="${bin.dir}/gigi.phar"/>
+		</target>	
+	
+</project>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ivysettings>
+<ivysettings>
+
+	<!-- PROPERTIES			-->
+	
+	<property name="ivy.dep.file" value="${basedir}/ivy/metadata.xml"/>
+	<property name="ivy.cache.dir" value="${ivy.home}/cache"/>
+	<property name="ivy.publish.src.artifacts.pattern" value="${dist.dir}/[artifact](-[classifier]).[ext]"/>
+  	<property name="ivy.retrieve.pattern" value="${lib.dir}/[artifact]-[revision](-[classifier]).[ext]"/>
+	<property name="ivy.default.resolver" value="default" override="false"/>
+
+	
+	<!-- SETTINGS			-->
+	<settings  defaultResolver="${ivy.default.resolver}" />
+	
+	<!-- INCLUDE			-->
+	<!-- CLASSPATH			-->
+	<!-- TYPEDEF			-->
+	<!-- CREDENTIALS		-->
+	<!-- LOCK-STRATEGIES	-->
+	
+	<!-- CACHES				-->
+	<caches defaultCacheDir="${ivy.cache.dir}" lockStrategy="artifact-lock-nio"/>
+	
+	<!-- LATEST-STRATEGIES	-->
+	
+	<latest-strategies>
+	
+		<latest-revision name="latestrevision" usedefaultspecialmeanings="false">
+		<!--
+			<specialMeaning name="working" value="-1"/>-->
+			<specialMeaning name="devel" value="1"/>
+			<specialMeaning name="snapshot" value="2"/>
+		
+		</latest-revision>
+	
+	</latest-strategies>
+	
+	<!-- VERSION-MATCHERS	-->
+	<!-- TRIGGERS			-->
+	<triggers>
+	</triggers>
+	<!-- PARSERS			-->
+	<!-- CONFLICT-MANAGERS	-->
+	<!-- OUTPUTTERS			-->
+	
+	
+	<!-- RESOLVERS			-->
+	<resolvers>
+		<ibiblio name="public" m2compatible="true"/>
+	 	<chain name="default" latest="latestrevision" returnFirst="true">
+	    	<resolver ref="public"/>
+  		</chain>
+  		<chain name="working" latest="latestrevision" returnFirst="true">
+  			<resolver ref="public"/>
+  		</chain>
+	</resolvers>
+  	<!-- STATUSES			-->
+  	<!-- 
+  	The statuses order is important, the first is considered the more mature, the last the less mature. 
+  	This is used to know if a status is compatible with a latest.<status> version matcher.
+  	 -->
+  	<statuses>
+  		<status name="release" integration="true"/>
+  		<status name="external" integration="true"/>
+  		<status name="snapshot" integration="true"/>
+  		<status name="devel" integration="true"/>
+  		<status name="working" integration="false"/>
+  	</statuses>
+</ivysettings>

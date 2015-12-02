@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="default" name="autoload-builder-test"
+	xmlns:php="antlib:org.opfx.ant.php"
+	xmlns:au="antlib:org.apache.ant.antunit"
+	>
+
+	<import file="../base.xml" as="base"/>
+
+		<target name="default" depends="setUp,init">
+			
+			<mkdir dir="${bin.dir}"/>
+			
+			<php:ab srcdir="${src.dir}" output="${bin.dir}/stub.php"/>
+			<au:assertFileExists file="${bin.dir}/stub.php"/>
+		</target>	
+	
+	
+	<target name="testInvalidParameters">		
+		<au:expectfailure expectedmessage="You must specify the autoload file to create!">
+			<php:ab />
+		</au:expectfailure>	
+	</target>
+	
+	<target name="testAutoloadBuilderWithSrcdirAttribute">
+		
+		<au:assertFileDoesntExist file="${bin.dir}/stub.php"/>
+		<au:assertFileDoesntExist dir="${bin.dir}"/>
+		
+		<php:ab srcdir="${src.dir}" output="${bin.dir}/stub.php"/>
+		<au:assertFileExists file="${bin.dir}/stub.php"/>		
+	</target>
+	
+
+	<target name="testAutoloadBuilderWithFileSets">
+		
+		<au:assertFileDoesntExist file="${bin.dir}/stub.php"/>
+		<au:assertFileDoesntExist dir="${bin.dir}"/>
+		
+		<php:ab output="${bin.dir}/stub.php">
+			
+		</php:ab>
+		<au:assertFileExists file="${bin.dir}/stub.php"/>		
+	</target>
+
+	
+
+</project>
